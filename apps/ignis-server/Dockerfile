@@ -28,8 +28,13 @@ FROM node:22-slim
 
 LABEL com.thiefling.ignis.obsidian-version="1.12.7"
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates curl git gosu \
+# Git is only needed by the optional child_process/Obsidian Git path. Keep the
+# production image small by default, while retaining an explicit opt-in build.
+ARG IGNIS_INCLUDE_GIT=false
+RUN apt-get update \
+  && packages="ca-certificates curl gosu" \
+  && if [ "$IGNIS_INCLUDE_GIT" = "true" ]; then packages="$packages git"; fi \
+  && apt-get install -y --no-install-recommends $packages \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

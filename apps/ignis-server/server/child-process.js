@@ -133,18 +133,23 @@ function send(socket, message) {
 
 function emit(record, message) {
   const payload = { channel: "child-process", ...message, processId: record.id };
-  const encoded = JSON.stringify(payload);
-
-  if (encoded.length <= MAX_OUTPUT_BYTES) {
-    record.events.push(payload);
-    record.eventBytes = (record.eventBytes || 0) + encoded.length;
-    while (record.eventBytes > MAX_OUTPUT_BYTES && record.events.length) {
-      record.eventBytes -= JSON.stringify(record.events.shift()).length;
-    }
-  }
+  bufferEvent(record, payload);
 
   for (const socket of sockets.get(record.session) || []) {
     if (socket.vaultId === record.vaultId) send(socket, payload);
+  }
+}
+
+function bufferEvent(record, payload) {
+  record.events.push(payload);
+  if (payload.type !== "data") return;
+
+  record.eventBytes = (record.eventBytes || 0) + JSON.stringify(payload).length;
+  while (record.eventBytes > MAX_OUTPUT_BYTES) {
+    const index = record.events.findIndex((event) => event.type === "data");
+    if (index < 0) break;
+    record.eventBytes -= JSON.stringify(record.events[index]).length;
+    record.events.splice(index, 1);
   }
 }
 
@@ -301,4 +306,4 @@ function disconnect(socket) {
   }
 }
 
-module.exports = { makeRouter, wireWebSocket, disconnect, enabled };
+module.exports = { makeRouter, wireWebSocket, disconnect, enabled, bufferEvent };

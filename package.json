@@ -14,7 +14,9 @@
     "docker:build": "node apps/ignis-server/scripts/build-image.js",
     "lint": "oxlint packages apps/ignis-server/server --max-warnings 0 && node scripts/check-error-leaks.mjs",
     "test": "vitest run",
-    "test:child-process": "vitest run packages/shim/src/node/child_process.test.js apps/ignis-server/server/child-process.test.mjs && node scripts/child-process-harness.mjs",
+    "audit:child-process": "node scripts/audit-child-process-boundaries.mjs",
+    "test:child-process": "vitest run packages/shim/src/node/child_process.test.js apps/ignis-server/server/child-process.test.mjs && npm run audit:child-process && node scripts/child-process-harness.mjs",
+    "test:isolated": "bash scripts/test-isolated.sh",
     "test:watch": "vitest"
   },
   "dependencies": {

@@ -104,36 +104,7 @@ function attach() {
   if (attached) return;
   attached = true;
   const channel = wsClient.channel("child-process");
-  for (const type of ["spawn", "data", "error", "exit", "close"]) {
-    channel.subscribe(type, (message) => {
-      const child = children.get(message.processId);
-      if (!child) {
-        if (!pending.has(message.processId)) pending.set(message.processId, []);
-        pending.get(message.processId).push(message);
-        return;
-      }
-      if (message.type === "spawn") {
-        child.pid = message.pid;
-        child.emit("spawn");
-      } else if (message.type === "data") {
-        child[message.stream].emit("data", base64ToBytes(message.data));
-      } else if (message.type === "error") {
-        const error = new Error(message.error?.message || "child process failed");
-        error.code = message.error?.code;
-        child.error = error;
-        child.emit("error", error);
-      } else if (message.type === "exit") {
-        child.exitCode = message.code;
-        child.signalCode = message.signal;
-        child.emit("exit", message.code, message.signal);
-      } else {
-        child.stdout.emit("end");
-        child.stderr.emit("end");
-        child.emit("close", message.code, message.signal);
-        children.delete(message.processId);
-      }
-    });
-  }
+  for (const type of ["spawn", "data", "error", "exit", "close"]) channel.subscribe(type, dispatchMessage);
   wsClient.channel("child-process").send("attach", { session });
 }
 
@@ -202,7 +173,11 @@ export function spawn(command, args = [], options = {}) {
 
 function dispatchMessage(message) {
   const child = children.get(message.processId);
-  if (!child) return;
+  if (!child) {
+    if (!pending.has(message.processId)) pending.set(message.processId, []);
+    pending.get(message.processId).push(message);
+    return;
+  }
   if (message.type === "spawn") {
     child.pid = message.pid;
     child.emit("spawn");
