@@ -65,7 +65,7 @@ Immediately after the bootstrap response is applied, the client prefetches file 
 | `os`                 | Identity stubs (`platform()` returns `"linux"`, `hostname()` returns `"localhost"`, etc.).      |
 | `events`             | Standard EventEmitter implementation.                                                           |
 | `util`               | Common helpers (`promisify`, `inherits`, type guards).                                          |
-| `child_process`      | All functions throw "not available in the web version."                                         |
+ | `child_process`      | Feature-gated HTTP/WS transport for `spawn`/`exec`/`execFile` and sync variants; disabled by default. `fork` remains unsupported. |
 | `net`                | All classes/functions throw.                                                                    |
 | `http` / `https`     | Module is importable but `request()`/`get()` emit an `error` event; `createServer` throws. Plugins should use `requestUrl` or `fetch` (the shim routes cross-origin `fetch` through the server proxy). |
 | `buffer`             | Aliased to the browser `Buffer` polyfill set up by the loader.                                  |
@@ -145,6 +145,7 @@ An Express server that handles filesystem operations, vault management, static f
 - `/api/version` - Ignis version (SemVer), per-build identifier, and pinned Obsidian version.
 - `/api/settings/*` - read and update runtime server settings (cache sizes, request body limit, write-coalesce window, proxy mode and allowlist, direct-fetch host allowlist).
 - `/api/plugins/*` - Ignis plugin management (list, enable, disable). __WIP__
+- `/api/child-process/*` - gated process creation and synchronous command responses; async lifecycle and stdio use the `child-process` WebSocket channel.
 - `/api/ext/:pluginId/*` - routes registered by individual Ignis plugins.
 - `/vault-files/<vaultId>/<path>` - static file serving rooted at a vault, used by Obsidian for image/attachment resource URLs.
 
@@ -175,6 +176,12 @@ The one Ignis plugin currently in the repo is **headless-sync** (`apps/ignis-ser
 The client-side companion of an Ignis plugin: a standard Obsidian plugin (a `manifest.json` plus a bundled script) that Ignis loads in the browser rather than installing to disk. The virtual-plugin-loader (`packages/shim/src/virtual-plugin-loader.js`) fetches the bundle from the server, evals it, instantiates the plugin class against the live `app`. Loaded instances are tracked in `window.__ignis.plugins` and can be toggled per vault. Nothing is ever written to `.obsidian/plugins/`.
 
 headless-sync's companion (`ignis-headless-sync`) adds a status bar item, a settings tab with start/stop/unlink controls, and a core-sync guard that hides Obsidian's own Sync setting from `core-plugins.json` reads while headless sync is active for that vault, so a different device syncing the "Active core plugins list" can't accidentally re-enable it.
+
+### Child-process compatibility
+
+`IGNIS_CHILD_PROCESS=enabled` opts a non-demo server into a deliberately privileged compatibility path. The shim sends an opaque browser-session token and vault id to `/api/child-process/spawn` (or `/sync`); the existing vault WebSocket then carries bounded base64 stdout/stderr chunks and stdin/end/kill controls. The server binds every process to both values, retains at most 1 MiB of lifecycle/output metadata, limits active async processes globally and per session, kills children on final session-socket disconnect, and kills remaining children during shutdown. Relative `cwd` values are confined to the active vault and default to its root. The environment is not inherited wholesale: only `PATH`, `HOME`, locale, and temporary-directory variables form the baseline, then the plugin's explicit `options.env` is merged. Environment values are never logged.
+
+This is a trust boundary, not a sandbox. Commands run as the server user and can access anything that user can access, including container-mounted data and network resources. Enable it only behind authentication and only for trusted plugins. It is always rejected in demo mode, even if the environment variable is set. `fork`, detached processes, IPC channels, shell-specific signal semantics, and native Node streams/addons remain unsupported. Output is capped at 1 MiB per process and `timeout`/`maxBuffer` are enforced on the server.
 
 ## Demo mode
 

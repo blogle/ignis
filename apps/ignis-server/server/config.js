@@ -104,6 +104,11 @@ module.exports = {
   demoTemplateDir:
     process.env.DEMO_TEMPLATE_DIR || path.join(__dirname, "demo-template"),
 
+  childProcessEnabled: process.env.IGNIS_CHILD_PROCESS === "enabled",
+  childProcessMaxProcesses: Math.max(1, parseInt(process.env.IGNIS_CHILD_PROCESS_MAX_PROCESSES) || 8),
+  childProcessMaxProcessesPerSession: Math.max(1, parseInt(process.env.IGNIS_CHILD_PROCESS_MAX_PROCESSES_PER_SESSION) || 4),
+  childProcessMaxTimeoutMs: Math.max(0, parseInt(process.env.IGNIS_CHILD_PROCESS_MAX_TIMEOUT_MS) || 10 * 60 * 1000),
+
   obsidianAssetsPath:
     process.env.OBSIDIAN_ASSETS_PATH ||
     path.join(REPO_ROOT, "investigation", "obsidian_1.12.7_unpacked"),

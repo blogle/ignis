@@ -19,3 +19,7 @@ There is also a direct-fetch list setting that marks CORS-friendly hosts the bro
 ## WebSocket origins
 
 Ignis pushes vault changes to open tabs over a WebSocket, and by default it accepts a connection from any origin. That means a page on another site, opened by a logged-in user, could connect to your instance. Set the environment variable [`WS_ORIGINS`](/docs/server/environment/) to the origins you serve Ignis from, and connections from anywhere else are refused.
+
+## Child processes
+
+`IGNIS_CHILD_PROCESS=enabled` gives trusted browser plugins a server-backed `child_process` API. This is a privileged compatibility feature, not a sandbox or OS confinement mechanism. Commands run with the server user's file and network permissions; process limits, vault-confined `cwd`, output caps, and session ownership reduce accidental damage but do not make untrusted plugins safe. Keep it disabled unless required, put authentication in front of the server, and use container/user permissions to limit mounts.

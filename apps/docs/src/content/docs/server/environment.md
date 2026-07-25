@@ -50,6 +50,17 @@ For example:
 | `AUTO_CREATE_DEFAULT` | `false` | Create a "My Vault" vault on startup when none exist. |
 | `WRITE_COALESCE_MS` | `0` | Debounce window in milliseconds for rapid writes. Raise it on slow filesystems such as rclone, NFS, or SMB. |
 
+## Child process compatibility
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `IGNIS_CHILD_PROCESS` | unset | Set to `enabled` to expose the trusted-plugin `child_process` compatibility path. It is disabled by default and always disabled in demo mode. |
+| `IGNIS_CHILD_PROCESS_MAX_PROCESSES` | `8` | Maximum active asynchronous child processes across the server. |
+| `IGNIS_CHILD_PROCESS_MAX_PROCESSES_PER_SESSION` | `4` | Maximum active asynchronous children for one browser session and vault. |
+| `IGNIS_CHILD_PROCESS_MAX_TIMEOUT_MS` | `600000` | Maximum requested process timeout. |
+
+This is not OS confinement. Enabled commands run as the server user and can access mounted files and network resources available to that user. Use authentication, `WS_ORIGINS`, container-level permissions, and a trusted-plugin policy.
+
 ---
 
 Demo mode adds its own `DEMO_*` variables for running a public, throwaway instance. See [`examples/demo/`](https://github.com/Nystik-gh/ignis/tree/main/apps/ignis-server/examples/demo) in the repository.

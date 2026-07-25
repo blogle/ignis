@@ -24,6 +24,15 @@ const pluginRoutes = require("./routes/plugins");
 writeCoalescer.configure({ writeCoalesceMs: settings.get("writeCoalesceMs") });
 const { flushAll } = writeCoalescer;
 const { setupDemo, wireDemoWebSocket } = require("./demo");
+const childProcessRoutes = require("./child-process");
+
+if (config.childProcessEnabled && config.demoMode) {
+  console.warn("[child-process] disabled because demo mode never permits plugin processes");
+} else if (config.childProcessEnabled) {
+  console.warn(
+    "[child-process] ENABLED: trusted plugins can execute commands with the server container's privileges; do not expose an unauthenticated server",
+  );
+}
 
 const REPO_ROOT = path.join(__dirname, "..", "..", "..");
 
@@ -95,6 +104,7 @@ app.use("/api/version", versionRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/plugins", pluginRoutes);
 app.use("/api/bootstrap", bootstrapRoutes);
+app.use("/api/child-process", childProcessRoutes.makeRouter());
 
 // Serve vault files for resource URLs (images, attachments, etc.)
 // Vault ID is the first path segment: /vault-files/<vault-id>/path/to/file
@@ -221,6 +231,7 @@ const wss = setupWebSocket(server, {
   getVaultPath: config.getVaultPath,
   originAllowlist: settings.get("wsOrigins"),
 });
+const childProcessRuntime = childProcessRoutes.wireWebSocket(wss);
 wireDemoWebSocket(server);
 
 async function gracefulShutdown(signal) {
@@ -228,6 +239,7 @@ async function gracefulShutdown(signal) {
 
   await flushAll();
   await shutdownPlugins();
+  childProcessRuntime.close();
 
   server.close(() => {
     console.log("[ignis] Server closed");

@@ -140,6 +140,7 @@ function setupWebSocket(server, opts = {}) {
     }
 
     const vaultPath = getVaultPath(vaultId);
+    ws.vaultId = vaultId;
     console.log(`[ws] Client connected to vault: ${vaultId}`);
 
     // isAlive is reset by each pong; the heartbeat sweep terminates sockets that miss one.

@@ -21,3 +21,7 @@ Some of Obsidian's features need the browser's crypto and clipboard APIs, which 
 
 - **Spellcheck languages.** A page cannot choose the browser's spellcheck languages, so Ignis disables the setting and points you to your browser's own language settings.
 - **Native menus.** The native menus option under Appearance relies on Electron's menu APIs, so Ignis leaves it turned off.
+
+## Child processes
+
+`child_process` is disabled by default and always disabled in demo mode. A self-hosted administrator can opt in for trusted plugins with `IGNIS_CHILD_PROCESS=enabled`; see [Child Process Compatibility](/docs/server/environment/) for the limits and trust model. `fork`, detached processes, IPC channels, native addons, and complete Node stream/error parity remain unsupported.
