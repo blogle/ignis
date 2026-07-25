@@ -1,0 +1,71 @@
+name: Child-process compatibility image
+
+on:
+  push:
+    branches:
+      - child-process-compat
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  IMAGE_NAME: ghcr.io/blogle/ignis
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Read package version
+        id: package
+        shell: bash
+        run: printf 'version=%s\n' "$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test child-process compatibility
+        run: npm run test:child-process
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=child-process-compat
+            type=sha,format=short,prefix=sha-
+            type=sha,format=long,prefix=sha-
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/ignis-server/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            IGNIS_BUILD=${{ github.sha }}
+            IGNIS_INCLUDE_GIT=true
+            IGNIS_SOURCE=https://github.com/blogle/ignis
+            IGNIS_REVISION=${{ github.sha }}
+            IGNIS_VERSION=${{ steps.package.outputs.version }}
+            IGNIS_BRANCH=${{ github.ref_name }}
+          provenance: true
+          sbom: true

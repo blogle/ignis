@@ -28,6 +28,15 @@ FROM node:22-slim
 
 LABEL com.thiefling.ignis.obsidian-version="1.12.7"
 
+ARG IGNIS_SOURCE=https://github.com/blogle/ignis
+ARG IGNIS_REVISION=unknown
+ARG IGNIS_VERSION=unknown
+ARG IGNIS_BRANCH=unknown
+LABEL org.opencontainers.image.source="${IGNIS_SOURCE}" \
+      org.opencontainers.image.revision="${IGNIS_REVISION}" \
+      org.opencontainers.image.version="${IGNIS_VERSION}" \
+      org.opencontainers.image.ref.name="${IGNIS_BRANCH}"
+
 # Git is only needed by the optional child_process/Obsidian Git path. Keep the
 # production image small by default, while retaining an explicit opt-in build.
 ARG IGNIS_INCLUDE_GIT=false

@@ -70,7 +70,7 @@ Ignis currently ships as a self-hosted server, with a desktop plugin variant pla
 ## Features
 
 - Core Obsidian: editor, canvas, bases, command palette, context menus, themes, and CSS snippets.
-- Most community plugins built on Obsidian's plugin API. Plugins needing Node native modules or `child_process` do not load.
+- Most community plugins built on Obsidian's plugin API. Node native modules remain unsupported; trusted `child_process` plugins require the opt-in compatibility image and `IGNIS_CHILD_PROCESS=enabled`.
 - File upload (ribbon, right-click, drag-and-drop) and download (files, or folders as ZIP).
 - Multi-vault support with create, open, switch, rename, and delete, and a different vault per browser tab.
 - Live sync between tabs over WebSocket, so edits propagate within a second.

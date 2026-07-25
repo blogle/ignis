@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Opt-in server-backed `child_process` compatibility for trusted plugins, with async/sync spawn, exec, execFile, vault-scoped cwd, bounded stdio, and WebSocket lifecycle control. It is disabled by default and unavailable in demo mode.
-- Production images include Git for the compatibility path; child processes now have session ownership, disconnect cleanup, timeout escalation, and configurable concurrency limits.
+- Git is available only in images built with `IGNIS_INCLUDE_GIT=true`; child processes now have session ownership, disconnect cleanup, timeout escalation, and configurable concurrency limits.
 
 ## [0.8.8] - Karm (2026-07-05)
 
